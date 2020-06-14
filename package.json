@@ -5,6 +5,11 @@
   "repository": "https://github.com/tkiryu/learn-webgl.git",
   "author": "Tatsushi K",
   "license": "MIT",
+  "scripts": {
+    "build": "webpack --mode production",
+    "dev": "webpack-dev-server",
+    "typecheck": "tsc -p . --noEmit"
+  },
   "devDependencies": {
     "css-loader": "^3.6.0",
     "html-webpack-plugin": "^4.3.0",
