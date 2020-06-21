@@ -1,5 +1,6 @@
 #version 300 es
-precision highp float;
+precision mediump float;
+in vec4 vColor;
 out vec4 outColor;
 
-void main(void) { outColor = vec4(0.0, 1.0, 1.0, 1.0); }
+void main(void) { outColor = vColor; }

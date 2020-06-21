@@ -65,6 +65,14 @@ function createVbo(gl: WebGL2RenderingContext, data: number[]): WebGLBuffer {
   return vbo;
 }
 
+function set_attribute(gl: WebGL2RenderingContext, vbo: WebGLBuffer[], attL: number[], attS: number[]) {
+  for (let i = 0, len = vbo.length; i < len; i++) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo[i]);
+    gl.enableVertexAttribArray(attL[i]);
+    gl.vertexAttribPointer(attL[i], attS[i], gl.FLOAT, false, 0, 0);
+  }
+}
+
 export function WebGLCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -81,19 +89,22 @@ export function WebGLCanvas() {
     const f_shader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShader);
     const prg = createProgram(gl, v_shader, f_shader);
 
-    const attLocation = gl.getAttribLocation(prg, 'position');
-    const attStride = 3;
+    const attLocation = new Array(2);
+    // vertex_shader の in vec3 position;
+    attLocation[0] = gl.getAttribLocation(prg, 'position');
+    // vertex_shader の in vec4 color;
+    attLocation[1] = gl.getAttribLocation(prg, 'color');
+
+    const attStride = new Array(2);
+    attStride[0] = 3;
+    attStride[1] = 4;
+
     const vertex_position = [0.0, 1.0, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0];
-    const vbo = createVbo(gl, vertex_position);
+    const vertex_color = [1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0];
+    const position_vbo = createVbo(gl, vertex_position);
+    const color_vbo = createVbo(gl, vertex_color);
 
-    // VBOをバインド
-    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-
-    // attribute属性を有効にする
-    gl.enableVertexAttribArray(attLocation);
-
-    // attribute属性を登録
-    gl.vertexAttribPointer(attLocation, attStride, gl.FLOAT, false, 0, 0);
+    set_attribute(gl, [position_vbo, color_vbo], attLocation, attStride);
 
     // モデル座標変換行列
     const mMatrix = Matrix4.identity();
@@ -112,14 +123,23 @@ export function WebGLCanvas() {
       far: 100
     });
 
-    // 各行列を掛け合わせ座標変換行列を完成させる
-    const mvpMatrix = pMatrix.mulByMatrix4(vMatrix).mulByMatrix4(mMatrix);
-
     // uniformLocationの取得
     const uniLocation = gl.getUniformLocation(prg, 'mvpMatrix');
 
+    // 各行列を掛け合わせ座標変換行列を完成させる
+    const mvpMatrix1 = pMatrix.mulByMatrix4(vMatrix).mulByMatrix4(mMatrix.translate(1.5, 0.0, 0.0));
+
     // uniformLocationへ座標変換行列を登録
-    gl.uniformMatrix4fv(uniLocation, false, mvpMatrix.values);
+    gl.uniformMatrix4fv(uniLocation, false, mvpMatrix1.values);
+
+    // モデルの描画
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // 各行列を掛け合わせ座標変換行列を完成させる
+    const mvpMatrix2 = pMatrix.mulByMatrix4(vMatrix).mulByMatrix4(mMatrix.translate(-1.5, 0.0, 0.0));
+
+    // uniformLocationへ座標変換行列を登録
+    gl.uniformMatrix4fv(uniLocation, false, mvpMatrix2.values);
 
     // モデルの描画
     gl.drawArrays(gl.TRIANGLES, 0, 3);
